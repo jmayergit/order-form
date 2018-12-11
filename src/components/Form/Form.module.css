@@ -1,3 +1,13 @@
+.form {
+  margin: 2rem;
+}
+
 .progressBar {
   display: flex;
+}
+
+.step {
+  margin: 2rem 0rem;
+  border: solid black 1px;
+  padding: 1rem;
 }
