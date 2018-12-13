@@ -1,22 +1,14 @@
 import * as React from 'react';
 import styles from './Form.module.css';
 import dishes from '../../constants/dishes';
-import StepOne from './StepOne/StepOne';
-import StepTwo from './StepTwo/StepTwo';
-import StepThree from './StepThree/StepThree';
-
-// meal: breakfast, lunch, dinner
-// no of people 1-10
-// restaurant
-// dish -- no of servings
 
 class Form extends React.Component {
   state = {
     step: 1,
     groupSize: 1,
     meal: 'breakfast',
-    restaurant: 'Mc Donalds',
-    orders: [
+    restaurant: '',
+    order: [
       {
         id: 0,
         dish_id: null,
@@ -25,11 +17,11 @@ class Form extends React.Component {
     ],
   }
 
-  addOrder = () => {
+  addItem = () => {
     this.setState((prevState) => ({
-      orders: [...prevState.orders,
+      order: [...prevState.order,
         {
-          id: prevState.orders.length,
+          id: prevState.order.length,
           dish_id: null,
           no_serverings: 1,
         }
@@ -37,34 +29,30 @@ class Form extends React.Component {
     }));
   }
 
-  removeOrder = () => {
+  removeItem = () => {
     this.setState((prevState) => {
-      let copy = [...prevState.orders]
+      let copy = [...prevState.order]
       let index = copy.length - 1;
       copy.splice(index, 1)
-      return { orders: copy }
+      return { order: copy }
     })
   }
 
-  updateOrderDish = (event) => {
-    let id = event.target.orderid;
+  updateItemDish = (event) => {
+    let id = event.target.id;
     let dish_id = event.target.value;
     this.setState((prevState) => ({
-      orders: prevState.orders.map(order => order.id === id ? Object.assign({}, order, { dish_id: dish_id}) : order)
+      order: prevState.order.map(item => item.id === id ? Object.assign({}, item, {dish_id: dish_id}) : item)
     }))
   }
 
-  updateOrderServing = (event) => {
-    // let id = event.target.dishid;
-    // let value = event.target.value;
-    // this.setState((prevState) => {
-    //   return;
-    // })
+  updateItemServing = (event) => {
+    let id = event.target.id;
+    let no_servings = event.target.value;
+    this.setState((prevState) => ({
+      order: prevState.order.map(item => item.id === id ? Object.assign({}, item, {no_servings: no_servings}) : item)
+    }))
   }
-
-
-    // make copy
-    // replace index of copy with new value
 
   handleChange = (event) => {
     const name = event.target.name;
@@ -78,25 +66,35 @@ class Form extends React.Component {
       case 'restaurant':
         this.setState({ restaurant: event.target.value })
         break;
-      case 'orderDish':
-        this.updateOrderDish(event)
+      case 'itemDish':
+        this.updateItemDish(event)
         break;
-      case 'orderServing':
-        this.updateOrderServing(event)
+      case 'itemServing':
+        this.updateItemServing(event)
         break;
       default:
         console.log('default');
     }
   }
 
-  handleClick = () => {
-    this.setState((state) => ({
-      step: state.step + 1
+  previousClick = () => {
+    this.setState((prevState) => ({
+      step: prevState.step - 1
+    }))
+  }
+
+  nextClick = () => {
+    this.setState((prevState) => ({
+      step: prevState.step + 1
     }))
   }
 
   render() {
-    const { step, meal, restaurant, orders } = this.state;
+    const { step, meal, groupSize, restaurant, order } = this.state;
+    const dishesByMeal = dishes.filter(dish => dish.availableMeals.includes(meal))
+    const restaurants = [...new Set(dishesByMeal.map(dish => dish.restaurant))]
+    const dishesToChooseFrom = dishesByMeal.filter(dish => dish.restaurant === restaurant)
+    console.log(order);
 
     return (
       <div className={styles.form}>
@@ -106,40 +104,87 @@ class Form extends React.Component {
           <div className={styles.step}>Step 3</div>
           <div className={styles.step}>Review</div>
         </div>
-        <div>{step}{meal}{restaurant}</div>
+        <div>step:{step}groupSize:{groupSize}meal:{meal}resto:{restaurant}</div>
 
         {step === 1 && (
           <div>
-            <StepOne
-              handleChange={this.handleChange}
-            />
-            <button onClick={this.handleClick}>
+            <div>Please Select a Meal</div>
+            <select onChange={this.handleChange} name="meal" defaultValue={meal}>
+              <option value={'breakfast'}>Breakfast</option>
+              <option value={'lunch'}>Lunch</option>
+              <option value={'dinner'}>Dinner</option>
+            </select>
+            <div>Please Enter Number of People</div>
+            <select onChange={this.handleChange} name="groupSize" defaultValue={groupSize}>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+              <option value={5}>5</option>
+              <option value={6}>6</option>
+              <option value={7}>7</option>
+              <option value={8}>8</option>
+              <option value={9}>9</option>
+              <option value={10}>10</option>
+            </select>
+            <button onClick={this.nextClick}>
               Next
             </button>
           </div>
         )}
         {step === 2 && (
           <div>
-            <StepTwo
-              dishes={dishes}
-              meal={meal}
-              handleChange={this.handleChange}
-            />
-            <button onClick={this.handleClick}>
+            <div>Please Select a Restaurant</div>
+            <select name="restaurant" onChange={this.handleChange} defaultValue={restaurant}>
+              <option value=""></option>
+              {restaurants.map(restaurant => (
+                <option key={restaurant}>{restaurant}</option>
+              ))}
+            </select>
+            <button onClick={this.previousClick}>
+              Previous
+            </button>
+            <button onClick={this.nextClick} disabled={restaurant === ''}>
               Next
             </button>
           </div>
         )}
         {step === 3 && (
-          <StepThree
-            dishes={dishes}
-            meal={meal}
-            restaurant={restaurant}
-            orders={orders}
-            addOrder={this.addOrder}
-            removeOrder={this.removeOrder}
-            handleChange={this.handleChange}
-          />
+          <div>
+            {order.map( item =>
+              <div key={item.id} onChange={this.handleChange}>
+                <div>Please Select a Dish</div>
+                <select name="itemDish" id={item.id} defaultValue={item.dish_id}>
+                  {dishesToChooseFrom.map(availableDish => (
+                    <option key={availableDish.id} value={availableDish.id}>{availableDish.name}</option>
+                  ))}
+                </select>
+                <select name="itemServing" id={item.id} defaultValue={item.no_servings}>
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                  <option value={4}>4</option>
+                  <option value={5}>5</option>
+                  <option value={6}>6</option>
+                  <option value={7}>7</option>
+                  <option value={8}>8</option>
+                  <option value={9}>9</option>
+                  <option value={10}>10</option>
+                </select>
+                {item.id === order.length - 1 && item.id !== 0 && (
+                  <button onClick={this.removeItem}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            )}
+            <button onClick={this.addItem}>
+              Add Another Item
+            </button>
+            <button onClick={this.previousClick}>
+              Previous
+            </button>
+          </div>
         )}
       </div>
     )
