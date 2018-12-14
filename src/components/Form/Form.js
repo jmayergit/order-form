@@ -1,6 +1,8 @@
 import * as React from 'react';
 import styles from './Form.module.css';
 import dishes from '../../constants/dishes';
+import { getRestaurantsThatServe } from '../../data/api';
+import FormSelect from './FormSelect/FormSelect';
 
 class Form extends React.Component {
   state = {
@@ -39,19 +41,34 @@ class Form extends React.Component {
   }
 
   updateItemDish = (event) => {
-    let id = event.target.id;
+    let item_id = event.target.id;
     let dish_id = event.target.value;
-    this.setState((prevState) => ({
-      order: prevState.order.map(item => item.id === id ? Object.assign({}, item, {dish_id: dish_id}) : item)
-    }))
+    this.setState(prevState => (
+      {
+        order: prevState.order.map(item => item.id == item_id ? {...item, dish_id: dish_id} : item)
+      }
+    ))
   }
 
   updateItemServing = (event) => {
     let id = event.target.id;
     let no_servings = event.target.value;
     this.setState((prevState) => ({
-      order: prevState.order.map(item => item.id === id ? Object.assign({}, item, {no_servings: no_servings}) : item)
+      order: prevState.order.map(item => item.id == id ? Object.assign({}, item, {no_servings: no_servings}) : item)
     }))
+  }
+
+  updateRestaurant = (event, restaurant) => {
+    let value
+    if (event) {
+      value = event.target.value
+    } else if (restaurant) {
+      value = restaurant
+    }
+
+    this.setState({
+      restaurant: value
+    })
   }
 
   handleChange = (event) => {
@@ -92,7 +109,7 @@ class Form extends React.Component {
   render() {
     const { step, meal, groupSize, restaurant, order } = this.state;
     const dishesByMeal = dishes.filter(dish => dish.availableMeals.includes(meal))
-    const restaurants = [...new Set(dishesByMeal.map(dish => dish.restaurant))]
+    const restaurants = getRestaurantsThatServe(meal);
     const dishesToChooseFrom = dishesByMeal.filter(dish => dish.restaurant === restaurant)
     console.log(order);
 
@@ -135,12 +152,11 @@ class Form extends React.Component {
         {step === 2 && (
           <div>
             <div>Please Select a Restaurant</div>
-            <select name="restaurant" onChange={this.handleChange} defaultValue={restaurant}>
-              <option value=""></option>
-              {restaurants.map(restaurant => (
-                <option key={restaurant}>{restaurant}</option>
-              ))}
-            </select>
+            <FormSelect
+              options={restaurants}
+              handleChange={this.updateRestaurant}
+              default_value={restaurant}
+            />
             <button onClick={this.previousClick}>
               Previous
             </button>
